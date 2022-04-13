@@ -1,10 +1,12 @@
 .section  .data
-    topoHeap: .quad
-    inicioHeap: .quad
+    topoHeap: .quad 0
+    inicioHeap: .quad 0
     str1: .string "topoHeap %d\n"
     str2: .string "inicioHeap %d\n"
+
 .section .text
-.globl _start
+.globl batata
+
 iniciaAlocador:
     pushq %rbp
     movq %rsp,%rbp
@@ -15,15 +17,16 @@ iniciaAlocador:
     movq %rax,inicioHeap
     pop %rbp
     ret
-_start:
+batata:
+    pushq %rbp
+    movq %rsp,%rbp
     call iniciaAlocador
     mov $str1,%rdi
-    movq inicioHeap,%rsi
-    movq $1,%rax
-    syscall
+    mov topoHeap,%rsi
+    call printf
     mov $str2,%rdi
-    movq topoHeap,%rsi
-    movq $1,%rax
-    syscall
-    movq $60,%rax
-    syscall
+    mov inicioHeap,%rsi
+    call printf
+    pop %rbp
+    ret
+
