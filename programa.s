@@ -101,6 +101,7 @@ batata:
 
     pushq $1000                         #Teste de alocaMem(1000)
     call alocaMem
+    addq $8,%rsp
     mov $str1,%rdi
     mov TOPO_HEAP,%rsi
     call printf
