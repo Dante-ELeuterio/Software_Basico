@@ -2,8 +2,8 @@
     TOPO_HEAP: .quad 0                  #Ponteiro para o topo da Heap, nesse momento ela está vazia
     INICIO_HEAP: .quad 0                #Ponteiro fixo para o início da heap
     ANDARILHO: .quad 0                  #Ponteiro que caminha pela heap em alocaMem
-    BYTES_A_ALOCAR: .quad 0
-    TESTE: .quad 0
+    BYTES_A_ALOCAR: .quad 0             #Guarda o numero de bytes a alocar
+    ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
 
     str1: .string "TOPO_HEAP %d\n"
     str2: .string "INICIO_HEAP %d\n"
@@ -12,6 +12,7 @@
 .section .text
 .globl alocaMem 
 .globl iniciaAlocador
+.globl liberaMem
 
 iniciaAlocador:
     pushq %rbp
@@ -60,6 +61,7 @@ alocaMem:
     jg Else
     movq ANDARILHO, %rax                #pendencia de implementar no caso de nao ter espaco para as flags
     movq BYTES_A_ALOCAR, %rcx
+    movq $1,8(%rax)
     movq %rcx, 16(%rax)
     movq %rcx, %rax
     subq %rax, %rbx                     
@@ -89,4 +91,13 @@ alocaMem:
     movq %rbx, 16(%rax)
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax
+
+liberaMem:
+    pushq %rbp
+    movq %rsp,%rbp    
+    movq %rdi,ENDEREÇO_A_DESALOCAR
+    movq ENDEREÇO_A_DESALOCAR,%rax
+    movq $0,8(%rax)
+    popq %rbp
+    ret
 
