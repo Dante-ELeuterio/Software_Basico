@@ -1,7 +1,8 @@
 #include <stdio.h>
+
+extern batata();
 int main(int argc, char const *argv[])
 {
-    extern batata();
     batata();
     return 0;
 }
