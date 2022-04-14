@@ -59,7 +59,7 @@ alocaMem:
     movq BYTES_A_ALOCAR, %rax
     addq $16,%rax
     cmpq %rbx, %rax
-    jge Else                            #se espaço livre não for maior que  bytes a alocar+16 não aloca (meio merda)   
+    jg Else                            #se espaço livre não for maior que  bytes a alocar+16 não aloca (meio merda)   
     movq ANDARILHO, %rax                #pendencia de implementar no caso de nao ter espaco para as flags
     movq BYTES_A_ALOCAR, %rcx
     movq $1,8(%rax)
