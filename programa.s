@@ -41,9 +41,10 @@ alocaMem:
     AchaLivre:
     movq ANDARILHO, %rax                #%rax == ANDARILHO
     movq -16(%rax), %rbx                  #ANDARILHO + 8 e onde esta armazenado o sinal de ocupado ou livre
+    cmpq $0, %rbx                       #Confere o sinal, se livre, pula para ver se o tamanho e compativel
     je ConfereTamanho
     Else:
-    cmpq $0, %rbx                       #Confere o sinal, se livre, pula para ver se o tamanho e compativel
+    movq ANDARILHO,%rax
     movq -8(%rax), %rbx                 #%rbx recebe o tamanho do espaco alocado no nodo
     addq %rbx, %rax
     addq $16, %rax                      #%rax desloca o tamanho do espaco alocado + 16 bytes
@@ -59,7 +60,7 @@ alocaMem:
     movq ANDARILHO, %rax
     movq -8(%rax), %rbx
     movq BYTES_A_ALOCAR, %rax
-    addq $16,%rax                       #Confere se tem espaço contando os 16 bytes das flag
+    #addq $16,%rax                       #Confere se tem espaço contando os 16 bytes das flag
     cmpq %rbx, %rax
     jg Else                                
     movq ANDARILHO, %rax                #Tem espaço,aloca aqui mesmo
