@@ -30,19 +30,21 @@ alocaMem:
     pushq %rbp
     movq %rsp,%rbp
     movq %rdi, BYTES_A_ALOCAR
-    movq INICIO_HEAP, %rax              #Ponteiro que caminha pela heap recebe o começo da Heap
-    movq %rax, ANDARILHO
+    movq INICIO_HEAP, %rax
+    movq %rax,%rbx
+    addq $24,%rbx                  
+    movq %rbx, ANDARILHO                #Ponteiro que caminha pela heap recebe o começo da Heap
     movq TOPO_HEAP, %rbx
     cmpq %rbx, %rax                     #Verifica se ANDARILHO chegou no topo da Heap
     jge AlocaEspacoNovo                 #Se sim aloca um novo bloco de memoria
  
     AchaLivre:
     movq ANDARILHO, %rax                #%rax == ANDARILHO
-    movq 8(%rax), %rbx                  #ANDARILHO + 8 e onde esta armazenado o sinal de ocupado ou livre
-    cmpq $0, %rbx                       #Confere o sinal, se livre, pula para ver se o tamanho e compativel
+    movq -16(%rax), %rbx                  #ANDARILHO + 8 e onde esta armazenado o sinal de ocupado ou livre
     je ConfereTamanho
     Else:
-    movq 16(%rax), %rbx                 #%rbx recebe o tamanho do espaco alocado no nodo
+    cmpq $0, %rbx                       #Confere o sinal, se livre, pula para ver se o tamanho e compativel
+    movq -8(%rax), %rbx                 #%rbx recebe o tamanho do espaco alocado no nodo
     addq %rbx, %rax
     addq $16, %rax                      #%rax desloca o tamanho do espaco alocado + 16 bytes
     movq %rax, ANDARILHO                #ANDARILHO se desloca para o proximo nodo
@@ -55,26 +57,24 @@ alocaMem:
 
     ConfereTamanho:
     movq ANDARILHO, %rax
-    movq 16(%rax), %rbx
+    movq -8(%rax), %rbx
     movq BYTES_A_ALOCAR, %rax
-    addq $16,%rax
+    addq $16,%rax                       #Confere se tem espaço contando os 16 bytes das flag
     cmpq %rbx, %rax
-    jg Else                            #se espaço livre não for maior que  bytes a alocar+16 não aloca (meio merda)   
-    movq ANDARILHO, %rax                #pendencia de implementar no caso de nao ter espaco para as flags
+    jg Else                                
+    movq ANDARILHO, %rax                #Tem espaço,aloca aqui mesmo
     movq BYTES_A_ALOCAR, %rcx
-    movq $1,8(%rax)
-    movq %rcx, 16(%rax)
+    movq $1,-16(%rax)
+    movq %rcx, -8(%rax)
     movq %rcx, %rax
     subq %rax, %rbx                     
     addq $16, %rbx                      
     movq ANDARILHO, %rax
-    addq %rbx, %rax
-    movq $0, 8(%rax)
-    subq $16, %rbx
-    movq %rbx, 16(%rax)
+    addq %rbx, %rax                     #Desloca pro nodo livre novo contendo os bytes restantes
+    movq $0, -16(%rax)
+    subq $32, %rbx
+    movq %rbx, -8(%rax)
     movq ANDARILHO, %rax
-    movq INICIO_HEAP, %rbx
-    movq %rbx, ANDARILHO
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax
 
@@ -87,9 +87,9 @@ alocaMem:
     syscall
     movq %rax, TOPO_HEAP
     movq ANDARILHO, %rax
-    movq $1, 8(%rax)                    #Seta o sinal de ocupado no novo espaço alocado
+    movq $1, -16(%rax)                    #Seta o sinal de ocupado no novo espaço alocado
     movq BYTES_A_ALOCAR, %rbx           #Armazena o tamanho do bloco no campo de tamanho em ANDARILHO + 16 bytes
-    movq %rbx, 16(%rax)
+    movq %rbx, -8(%rax)
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax
 
@@ -98,7 +98,7 @@ liberaMem:
     movq %rsp,%rbp    
     movq %rdi,ENDEREÇO_A_DESALOCAR
     movq ENDEREÇO_A_DESALOCAR,%rax
-    movq $0,8(%rax)
+    movq $0,-16(%rax)
     popq %rbp
     ret
 
