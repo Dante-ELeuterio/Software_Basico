@@ -32,7 +32,7 @@ alocaMem:
     movq %rdi, BYTES_A_ALOCAR
     movq INICIO_HEAP, %rax
     movq %rax,%rbx
-    addq $24,%rbx                  
+    addq $16,%rbx                  
     movq %rbx, ANDARILHO                #Ponteiro que caminha pela heap recebe o começo da Heap
     movq TOPO_HEAP, %rbx
     cmpq %rbx, %rax                     #Verifica se ANDARILHO chegou no topo da Heap
@@ -49,8 +49,7 @@ alocaMem:
     addq %rbx, %rax
     addq $16, %rax                      #%rax desloca o tamanho do espaco alocado + 16 bytes
     movq %rax, ANDARILHO                #ANDARILHO se desloca para o proximo nodo
-    movq ANDARILHO, %rax
-    addq $8, %rax
+    #addq $8, %rax
     movq TOPO_HEAP, %rbx
     cmpq %rbx, %rax                     #Verifica se ANDARILHO chegou no topo da heap
     jge AlocaEspacoNovo                 #Se sim aloca um novo bloco de memoria
@@ -73,11 +72,12 @@ alocaMem:
     movq %rcx, -8(%rax)
     movq %rcx, %rax
     subq %rax, %rbx                     
-    addq $16, %rbx                      
     movq ANDARILHO, %rax
-    addq %rbx, %rax                     #Desloca pro nodo livre novo contendo os bytes restantes
-    movq $0, -32(%rax)                  #Cria o nodo novo
-    subq $32, %rbx
+    movq BYTES_A_ALOCAR,%rcx
+    addq %rcx, %rax
+    addq $16,%rax                       #Desloca pro nodo livre novo contendo os bytes restantes
+    movq $0, -16(%rax)                  #Cria o nodo novo
+    subq $16, %rbx
     movq %rbx, -8(%rax)
     movq ANDARILHO, %rax
     pop %rbp
@@ -88,13 +88,6 @@ alocaMem:
     movq BYTES_A_ALOCAR, %rcx
     movq $1,-16(%rax)
     movq %rcx, -8(%rax)
-    movq %rcx, %rax
-    subq %rax, %rbx                     
-    addq $16, %rbx                      
-    movq ANDARILHO, %rax
-    addq %rbx, %rax                     #Desloca pro nodo livre novo contendo os bytes restantes
-    subq $32, %rbx
-    movq %rbx, -8(%rax)
     movq ANDARILHO, %rax
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax

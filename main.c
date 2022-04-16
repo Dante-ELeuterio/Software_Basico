@@ -10,8 +10,8 @@ int main(int argc, char const *argv[])
     long int *y=alocaMem(500);
     liberaMem(x);
     long int *z=alocaMem(500);
-    long int *k=alocaMem(484);
-    long int *j=alocaMem(1000);
+    long int *k=alocaMem(450);
+    long int *j=alocaMem(4);
     /*printf("X:\n");
     printf("%ld\n",x);
     printf("%ld\n",*(x-2));
