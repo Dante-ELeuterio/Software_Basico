@@ -194,6 +194,7 @@ imprimeMapa:
     cmpq TOPO_HEAP, %rbx
     jl  loop
     mov $str2, %rdi
+    call printf
     popq %rbp
     ret
 
