@@ -9,12 +9,13 @@
     str1: .string "TOPO_HEAP %d\n"
     str2: .string "INICIO_HEAP %d\n"
     str3: .string "PONTEIRO DA MEMORIA ALOCADA %d\n"
-    strteste: .string "TESTE:%d\n"
+    str4: .string "--------------------------------------\n"
 .section .text
 .globl alocaMem 
 .globl iniciaAlocador
 .globl liberaMem
 .globl finalizaAlocador
+.globl Mapa
 
 iniciaAlocador:
     pushq %rbp
@@ -163,4 +164,16 @@ finalizaAlocador:
     syscall
     popq %rbp
     ret
+
+Mapa:
+    pushq %rbp
+    movq %rsp,%rbp
+    loop:
+    movq $str4,%rdi
+    call printf
+    popq %rbp
+    ret
+
+
+
 
