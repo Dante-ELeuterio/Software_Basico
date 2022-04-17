@@ -1,4 +1,3 @@
-#include <stdio.h>
 
 extern long int* alocaMem();
 extern void iniciaAlocador();

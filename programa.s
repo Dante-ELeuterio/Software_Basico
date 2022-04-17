@@ -5,17 +5,12 @@
     BYTES_A_ALOCAR: .quad 0             #Guarda o numero de bytes a alocar
     ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
     NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
-
-    str1: .string "TOPO_HEAP %d\n"
-    str2: .string "INICIO_HEAP %d\n"
-    str3: .string "PONTEIRO DA MEMORIA ALOCADA %d\n"
-    str4: .string "--------------------------------------\n"
+    
 .section .text
 .globl alocaMem 
 .globl iniciaAlocador
 .globl liberaMem
 .globl finalizaAlocador
-.globl Mapa
 
 iniciaAlocador:
     pushq %rbp
@@ -165,15 +160,28 @@ finalizaAlocador:
     popq %rbp
     ret
 
-Mapa:
+imprimeMapa:
     pushq %rbp
     movq %rsp,%rbp
+    movq INICIO_HEAP, %rax
+    addq $16, %rax
+    movq %rax, ANDARILHO
     loop:
-    movq $str4,%rdi
+    movq ANDARILHO, %rax
+    movq -16(%rax), %rbx
+    cmpq $0, %rbx
+    je imprimeLivre                     #se estiver livre imprime +
+    jne imprimeOcupado                  #se estiver ocupado imprime -
+    imprimeBytes:                       #imprime a quantidade de bytes livres
+    movq -8(%rax), %rbx
+    mov bytesLivres, %rdi
+    movq %rbx, %rsi
     call printf
-    popq %rbp
-    ret
-
-
+    mov str1, %rdi                      #imprime o espaço
+    call printf
+    movq ANDARILHO, %rax
+    movq -8(%rax), %rbx
+    addq $16, %rbx
+    movq %rbx, ANDARILHO                #desloca para o próximo nodo
 
 
