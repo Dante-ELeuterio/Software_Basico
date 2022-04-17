@@ -5,12 +5,18 @@
     BYTES_A_ALOCAR: .quad 0             #Guarda o numero de bytes a alocar
     ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
     NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
-    
+
+livre: .string "+ "
+    ocupado: .string "- "
+    bytesLivres: .string "%d "
+    str1: .string "**| "
+
 .section .text
 .globl alocaMem 
 .globl iniciaAlocador
 .globl liberaMem
 .globl finalizaAlocador
+.globl imprimeMapa
 
 iniciaAlocador:
     pushq %rbp
