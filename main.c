@@ -14,6 +14,8 @@ int main(int argc, char const *argv[])
     long int *z=alocaMem(500);
     long int *k=alocaMem(450);
     long int *j=alocaMem(18);
+    imprimeMapa();
+
     /*liberaMem(y);
     liberaMem(k);
     liberaMem(z);
@@ -55,7 +57,6 @@ int main(int argc, char const *argv[])
     printf("%ld\n",*(w-1));
     printf("---------------------\n");*/
 
-    imprimeMapa();
 
     return 0;
 }
