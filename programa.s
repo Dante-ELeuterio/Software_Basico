@@ -6,10 +6,11 @@
     ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
     NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
 
-livre: .string "+ "
+    livre: .string "+ "
     ocupado: .string "- "
     bytesLivres: .string "%d "
-    str1: .string "**| "
+    str1: .string "***| "
+    str2: .string "\n"
 
 .section .text
 .globl alocaMem 
@@ -176,7 +177,7 @@ imprimeMapa:
     movq ANDARILHO, %rax
     movq -16(%rax), %rbx
     cmpq $0, %rbx
-    je imprimeLivre                     #se estiver livre imprime +
+    je  imprimeLivre                     #se estiver livre imprime +
     jne imprimeOcupado                  #se estiver ocupado imprime -
     imprimeBytes:                       #imprime a quantidade de bytes livres
     movq -8(%rax), %rbx
@@ -189,5 +190,20 @@ imprimeMapa:
     movq -8(%rax), %rbx
     addq $16, %rbx
     movq %rbx, ANDARILHO                #desloca para o próximo nodo
+    cmpq TOPO_HEAP, %rbx
+    jl  loop
+    mov str2, %rdi
+    popq %rbp
+    ret
+
+    imprimeLivre:
+    mov livre, %rdi
+    call printf
+    jmp imprimeBytes
+
+    imprimeOcupado:
+    movq ocupado, %rdi
+    call printf
+    jmp imprimeBytes
 
 

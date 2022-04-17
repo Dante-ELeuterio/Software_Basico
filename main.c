@@ -3,6 +3,7 @@ extern long int* alocaMem();
 extern void iniciaAlocador();
 extern void liberaMem();
 extern void finalizaAlocador();
+extern void imprimeMapa();
 
 int main(int argc, char const *argv[])
 {
@@ -22,7 +23,7 @@ int main(int argc, char const *argv[])
     printf("%ld\n",x);
     printf("%ld\n",*(x-2));
     printf("%ld\n",*(x-1));
-    printf("---------------------\n");*/
+    printf("---------------------\n");
 
     printf("Z:\n");
     printf("%ld\n",z);
@@ -53,6 +54,8 @@ int main(int argc, char const *argv[])
     printf("%ld\n",*(w-2));
     printf("%ld\n",*(w-1));
     printf("---------------------\n");*/
+
+    imprimeMapa();
 
     return 0;
 }
