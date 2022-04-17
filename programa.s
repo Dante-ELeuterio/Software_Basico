@@ -4,6 +4,7 @@
     ANDARILHO: .quad 0                  #Ponteiro que caminha pela heap em alocaMem
     BYTES_A_ALOCAR: .quad 0             #Guarda o numero de bytes a alocar
     ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
+    NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
 
     str1: .string "TOPO_HEAP %d\n"
     str2: .string "INICIO_HEAP %d\n"
@@ -13,6 +14,7 @@
 .globl alocaMem 
 .globl iniciaAlocador
 .globl liberaMem
+.globl finalizaAlocador
 
 iniciaAlocador:
     pushq %rbp
@@ -111,8 +113,54 @@ liberaMem:
     pushq %rbp
     movq %rsp,%rbp    
     movq %rdi,ENDEREÇO_A_DESALOCAR
-    movq ENDEREÇO_A_DESALOCAR,%rax
-    movq $0,-16(%rax)
+    movq ENDEREÇO_A_DESALOCAR,%rax      #rax recebe a posição exata de memória que deseja liberar
+    movq $0,-16(%rax)                   #Seta como livre a flag
+    movq INICIO_HEAP, %rax
+    addq $16, %rax
+    movq %rax, ANDARILHO                
+    JuntaNodos:                         #Laço que caminha pela Heap, quando encontra endereço livre faz a junção
+    movq ANDARILHO, %rax
+    movq %rax, NODO_JUNCAO
+    movq -16(%rax), %rbx
+    cmpq $0, %rbx
+    je Juncao                           #Se o nodo estiver livre, Realiza a junção até encontrar o primeiro ocupado
+    movq -8(%rax), %rbx
+    addq $16, %rbx
+    addq %rbx, %rax                     #Desloca para o próximo nodo
+    cmpq TOPO_HEAP, %rax
+    jge FimDesaloca
+    movq %rax, ANDARILHO
+    jmp JuntaNodos
+
+    Juncao:
+    movq ANDARILHO, %rax
+    movq -8(%rax), %rbx
+    addq $16, %rbx
+    addq %rbx, %rax                     #Desloca para o próximo nodo
+    cmpq TOPO_HEAP, %rax                
+    jge FimDesaloca                     #Compara para ver se chegou ao final
+    movq %rax, ANDARILHO
+    movq -16(%rax), %rbx
+    cmpq $0, %rbx                       #Se o próximo nodo não estiver livre, não realiza a juncao
+    jne JuntaNodos
+    movq -8(%rax), %rbx
+    addq $16, %rbx                      #Soma 16 Bytes na quantidade alocada no nodo livre   
+    movq NODO_JUNCAO, %rax
+    movq -8(%rax), %rcx
+    addq %rbx, %rcx                     
+    movq %rcx, -8(%rax)                 #Realiza a junção, soma as quantidades alocadas + 16 e guarda no primeiro livre
+    jmp Juncao
+
+    FimDesaloca:
+    popq %rbp
+    ret
+
+finalizaAlocador:
+    pushq %rbp
+    movq %rsp,%rbp
+    movq $12, %rax
+    movq INICIO_HEAP, %rdi
+    syscall
     popq %rbp
     ret
 
