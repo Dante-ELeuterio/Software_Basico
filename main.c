@@ -8,6 +8,7 @@ extern void imprimeMapa();
 int main(int argc, char const *argv[])
 {
     iniciaAlocador();
+    imprimeMapa();
     long int *x=alocaMem(1000);
     imprimeMapa();
     long int *y=alocaMem(500);

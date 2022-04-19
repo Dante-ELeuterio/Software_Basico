@@ -177,10 +177,10 @@ finalizaAlocador:
 imprimeMapa:
     pushq %rbp
     movq %rsp,%rbp
-    mov  $barra,%rdi
+    mov  $barra,%rdi                    #Imprime uma barra no inicio
     call printf
-    movq INICIO_HEAP, %rax
-    addq $16, %rax
+    movq INICIO_HEAP, %rax              #Coloca o inicio da heap em rax
+    addq $16, %rax                      #Desloca o rax pra primeira variavel
     movq %rax, ANDARILHO
     loop:
     movq ANDARILHO, %rax
