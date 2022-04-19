@@ -8,9 +8,12 @@
 
     livre: .string "+ "
     ocupado: .string "- "
-    bytesLivres: .string "%d "
+    bytesLivres: .string "%ld "
+    barra: .string "| "
     str1: .string "***| "
     str2: .string "\n"
+    str3: .string "-----------------------------------------------------------\n"
+    str4: .string "API para alocação de mémoria em Assembly\n"
 
 .section .text
 .globl alocaMem 
@@ -22,6 +25,10 @@
 iniciaAlocador:
     pushq %rbp
     movq %rsp,%rbp
+    movq $str4,%rdi
+    call printf
+    movq $str3,%rdi
+    call printf
     movq $12,%rax
     movq $0,%rdi                        #Passa 0 para %rdi para se retornar o valor de brk em %rax
     syscall
@@ -170,6 +177,8 @@ finalizaAlocador:
 imprimeMapa:
     pushq %rbp
     movq %rsp,%rbp
+    mov  $barra,%rdi
+    call printf
     movq INICIO_HEAP, %rax
     addq $16, %rax
     movq %rax, ANDARILHO
@@ -191,9 +200,12 @@ imprimeMapa:
     movq -8(%rax), %rbx
     addq $16, %rbx
     addq %rbx, ANDARILHO                #desloca para o próximo nodo
+    movq ANDARILHO,%rbx
     cmpq TOPO_HEAP, %rbx
     jl  loop
     mov $str2, %rdi
+    call printf
+    movq $str3,%rdi
     call printf
     popq %rbp
     ret
