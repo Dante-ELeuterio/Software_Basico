@@ -7,10 +7,12 @@
     NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
     ALOCOU: .quad 0                     #Flag pra não imprimir vazio
 
-    livre: .string "-"
-    ocupado: .string "+"
+    livre: .string "+ "
+    ocupado: .string "- "
+    bytesLivres: .string "%ld "
+    barra: .string "| "
     mapa_vazio: .string "Mapa vazio\n-----------------------------------------------------------\n"
-    bytesFlags: .string "################"
+    str1: .string "***| "
     str2: .string "\n"
     str3: .string "-----------------------------------------------------------\n"
     str4: .string "API para alocação de mémoria em Assembly\n"
@@ -188,57 +190,46 @@ imprimeMapa:
     ret
     
     imprime:
+    mov  $barra,%rdi                    #Imprime uma barra no inicio
+    call printf
     movq INICIO_HEAP, %rax              #Coloca o inicio da heap em rax
     addq $16, %rax                      #Desloca o rax pra primeira variavel
     movq %rax, ANDARILHO
     loop:
-    mov $bytesFlags,%rdi
-    call printf
     movq ANDARILHO, %rax                #restaura %rax com o ANDARILHO
     movq -16(%rax), %rbx                #Coloca a flag de ocupado ou livre em %rbx
     cmpq $0, %rbx                       #Confere se está ocupado ou livre
-    je  imprimeLivre                    #se estiver livre imprime - vezes o número de bytes livres
-    jne imprimeOcupado                  #se estiver ocupado imprime + vees o número de bytes ocupados
-
-    imprimeLivre:
+    je  imprimeLivre                    #se estiver livre imprime +
+    jne imprimeOcupado                  #se estiver ocupado imprime -
+    imprimeBytes:                       #imprime a quantidade de bytes livres
     movq ANDARILHO, %rax
-    movq -8(%rax), %rbx                 #Move a quantidade de bytes ocupados para %rbx
-    loopLivre:                          #Parte do código que imprime o sinal de ocupado ou livre n vezes
-    mov $livre, %rdi
+    movq -8(%rax), %rbx                 #Coloca o número de bytes do bloco em %rbx
+    mov $bytesLivres, %rdi
+    movq %rbx, %rsi
+    call printf                         #Imprime a quantidade de bytes do bloco
+    mov $str1, %rdi                     #Imprime os simbolso para demonstrar os bytes
     call printf
-    subq $1, %rbx                       #Subtrai %rbx em 1 até chegar em 0, para imprimir os n bytes
-    cmpq $0, %rbx
-    jg loopLivre                        #Enquanto %rbx for menor que 0 continua no loop
     movq ANDARILHO, %rax                #Restaura %rax
     movq -8(%rax), %rbx                 
     addq $16, %rbx
     addq %rbx, ANDARILHO                #desloca para o próximo nodo
     movq ANDARILHO,%rbx
     cmpq TOPO_HEAP, %rbx                #Confere se alcançou o fim da heap
-    jl  loop
-    jmp final
-
-    imprimeOcupado:
-    movq ANDARILHO, %rax
-    movq -8(%rax), %rbx                 #Move a quantidade de bytes ocupados para %rbx
-    loopOcupado:                        #Parte do código que imprime o sinal de ocupado ou livre n vezes
-    mov $ocupado, %rdi
-    call printf                         
-    subq $1, %rbx                       #Subtrai %rbx em 1 até chegar em 0, para imprimir os n bytes
-    cmpq $0, %rbx
-    jg loopOcupado                      #Enquanto %rbx for menor que 0 continua no loop
-    movq ANDARILHO, %rax                #Restaura %rax
-    movq -8(%rax), %rbx                 
-    addq $16, %rbx
-    addq %rbx, ANDARILHO                #desloca para o próximo nodo
-    movq ANDARILHO,%rbx
-    cmpq TOPO_HEAP, %rbx                #Confere se alcançou o fim da heap
-    jl  loop
-    jmp final
-
-    final:
-    mov $str2, %rdi
+    jl  loop                            
+    mov $str2, %rdi                     #Pula a linha e coloca uma ultima fileira de "-------" para acabar a impressão
+    call printf
+    movq $str3,%rdi
     call printf
     popq %rbp
     ret
+
+    imprimeLivre:
+    mov $livre, %rdi
+    call printf
+    jmp imprimeBytes
+
+    imprimeOcupado:
+    mov $ocupado, %rdi
+    call printf
+    jmp imprimeBytes
 
