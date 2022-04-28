@@ -1,2 +1,2 @@
 rm -r *.o
-rm -r teste
+rm -r meuAlocador

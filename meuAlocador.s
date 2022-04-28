@@ -2,20 +2,18 @@
     TOPO_HEAP: .quad 0                  #Ponteiro para o topo da Heap, nesse momento ela está vazia
     INICIO_HEAP: .quad 0                #Ponteiro fixo para o início da heap
     ANDARILHO: .quad 0                  #Ponteiro que caminha pela heap em alocaMem
+    NEXT_FIT: .quad 0                   #Ponteiro para guardar o ultimo endereço alocado
+    NEXT_RODOU: .quad 0                 #Flag para saber se o next_fit bateu no fim
     BYTES_A_ALOCAR: .quad 0             #Guarda o numero de bytes a alocar
     ENDEREÇO_A_DESALOCAR: .quad 0       #Guarda o endereço da variavel a dar free
     NODO_JUNCAO: .quad 0                #Guarda o nodo em que será feita a junção
-    ALOCOU: .quad 0                     #Flag pra não imprimir vazio
 
-    livre: .string "+ "
-    ocupado: .string "- "
-    bytesLivres: .string "%ld "
-    barra: .string "| "
-    mapa_vazio: .string "Mapa vazio\n-----------------------------------------------------------\n"
-    str1: .string "***| "
-    str2: .string "\n"
-    str3: .string "-----------------------------------------------------------\n"
-    str4: .string "API para alocação de mémoria em Assembly\n"
+    livre: .string "-"
+    ocupado: .string "+"
+    mapa_vazio: .string "\nMapa vazio\n\n"
+    bytesFlags: .string "################"
+    str2: .string "\n\n"
+    str4: .string "API para alocação de mémoria em Assembly\n\n"
 
 .section .text
 .globl alocaMem 
@@ -29,13 +27,12 @@ iniciaAlocador:
     movq %rsp,%rbp
     movq $str4,%rdi
     call printf
-    movq $str3,%rdi
-    call printf                         #Strings de inicio do codigo
     movq $12,%rax
     movq $0,%rdi                        #Passa 0 para %rdi para se retornar o valor de brk em %rax
     syscall
     movq %rax,TOPO_HEAP                 #Passa os valores de brk para as variáveis globais
     movq %rax,INICIO_HEAP                
+    movq %rax,NEXT_FIT
     pop %rbp
     ret
 
@@ -43,18 +40,19 @@ iniciaAlocador:
 alocaMem:
     pushq %rbp
     movq %rsp,%rbp
-    movq $1,ALOCOU                      #Flag para evitar segfault se alguem tentar imprimir sem ter alocado nada
     movq %rdi, BYTES_A_ALOCAR
     movq INICIO_HEAP, %rax
     movq %rax,%rbx
     addq $16,%rbx                  
     movq %rbx, ANDARILHO                #Ponteiro que caminha pela heap recebe o começo da Heap
     movq TOPO_HEAP, %rbx
-    cmpq %rbx, %rax                     #Verifica se ANDARILHO chegou no topo da Heap
+    cmpq %rbx, %rax                     #Confere se a heap está vazia
     jge AlocaEspacoNovo                 #Se sim aloca um novo bloco de memoria
+    movq NEXT_FIT, %rax                 
+    movq %rax,ANDARILHO                 #ANDARILHO=NEXT_FIT
  
     AchaLivre:
-    movq ANDARILHO, %rax                #%rax == ANDARILHO
+    movq ANDARILHO,%rax                 #%rax == ANDARILHO
     movq -16(%rax), %rbx                #ANDARILHO + 8 e onde esta armazenado o sinal de ocupado ou livre
     cmpq $0, %rbx                       #Confere o sinal, se livre, pula para ver se o tamanho e compativel
     je ConfereTamanho
@@ -64,21 +62,26 @@ alocaMem:
     addq %rbx, %rax
     addq $16, %rax                      #%rax desloca o tamanho do espaco alocado + 16 bytes
     movq %rax, ANDARILHO                #ANDARILHO se desloca para o proximo nodo
-    #addq $8, %rax
     movq TOPO_HEAP, %rbx
     cmpq %rbx, %rax                     #Verifica se ANDARILHO chegou no topo da heap
-    jge AlocaEspacoNovo                 #Se sim aloca um novo bloco de memoria
+    jl  AchaLivre
+    movq $1,%rax
+    cmpq NEXT_RODOU,%rax                #Confere se nex_fit ja deu a volta
+    je AlocaEspacoNovo                  #Se sim aloca um novo bloco de memoria
+    movq $1,NEXT_RODOU                  #Começa a dar a volta
+    movq INICIO_HEAP,%rax
+    movq %rax,ANDARILHO    
     jmp AchaLivre
 
     ConfereTamanho:
     movq ANDARILHO, %rax
-    movq -8(%rax), %rbx                #Compara a quantidade de bytes a alocar com o tamanho do bloco vazio encontrado
+    movq -8(%rax), %rbx                 #Compara a quantidade de bytes a alocar com o tamanho do bloco vazio encontrado
     movq BYTES_A_ALOCAR, %rax
     cmpq %rbx, %rax
-    je IGUAL                           #Se for igual pode alocar sem preocupar com criar um novo nodo vazio com 16 bytes de flag
-    addq $16,%rax                      #Confere se tem espaço contando os 16 bytes das flag
+    je IGUAL                            #Se for igual pode alocar sem preocupar com criar um novo nodo vazio com 16 bytes de flag
+    addq $16,%rax                       #Confere se tem espaço contando os 16 bytes das flag
     cmpq %rbx, %rax
-    jg Else                            #Se não tem espaço volta a procurar novo nodo
+    jge Else                            #Se não tem espaço volta a procurar novo nodo
     
     MENOR:
     movq ANDARILHO, %rax                #Tem espaço,aloca aqui mesmo
@@ -95,6 +98,8 @@ alocaMem:
     subq $16, %rbx
     movq %rbx, -8(%rax)
     movq ANDARILHO, %rax
+    movq %rax,NEXT_FIT
+    movq $0,NEXT_RODOU
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax
     
@@ -104,6 +109,8 @@ alocaMem:
     movq $1,-16(%rax)
     movq %rcx, -8(%rax)
     movq ANDARILHO, %rax
+    movq %rax,NEXT_FIT
+    movq $0,NEXT_RODOU
     pop %rbp
     ret                                 #Retorna para a main com o valor do endereco alocado em %rax
 
@@ -116,6 +123,8 @@ alocaMem:
     syscall
     movq %rax, TOPO_HEAP
     movq ANDARILHO, %rax
+    movq %rax,NEXT_FIT                  #Salva o último alocado
+    movq $0,NEXT_RODOU
     movq $1, -16(%rax)                  #Seta o sinal de ocupado no novo espaço alocado
     movq BYTES_A_ALOCAR, %rbx           #Armazena o tamanho do bloco no campo de tamanho em ANDARILHO + 16 bytes
     movq %rbx, -8(%rax)
@@ -151,11 +160,16 @@ liberaMem:
     addq $16, %rbx
     addq %rbx, %rax                     #Desloca para o próximo nodo
     cmpq TOPO_HEAP, %rax                
-    jge FimDesaloca                     #Compara para ver se chegou ao final
+    jge VoltaBRK                        #Compara para ver se chegou ao final
     movq %rax, ANDARILHO
     movq -16(%rax), %rbx
     cmpq $0, %rbx                       #Se o próximo nodo não estiver livre, não realiza a juncao
     jne JuntaNodos
+    cmpq %rax,NEXT_FIT
+    jne NextOK
+    movq NODO_JUNCAO,%rbx               
+    movq %rbx,NEXT_FIT                  #Reposiciona o ponteiro do NEXT_FIT para o nodo ao qual ele se juntou
+    NextOK:
     movq -8(%rax), %rbx
     addq $16, %rbx                      #Soma 16 Bytes na quantidade alocada no nodo livre   
     movq NODO_JUNCAO, %rax
@@ -163,6 +177,16 @@ liberaMem:
     addq %rbx, %rcx                     
     movq %rcx, -8(%rax)                 #Realiza a junção, soma as quantidades alocadas + 16 e guarda no primeiro livre
     jmp Juncao
+    
+    VoltaBRK:                           #Liberou o ultimo nodo,volta a brk
+    movq NODO_JUNCAO,%rax
+    subq $16,%rax
+    movq %rax,NEXT_FIT
+    movq %rax,TOPO_HEAP
+    movq $12,%rax
+    movq TOPO_HEAP,%rdi
+    syscall
+
 
     FimDesaloca:
     popq %rbp
@@ -177,59 +201,73 @@ finalizaAlocador:
     popq %rbp
     ret
 
+
 imprimeMapa:
     pushq %rbp
     movq %rsp,%rbp
     
-    movq ALOCOU,%rax                    #Se nunca tiver alocado nada,imprime mensagem de erro e retorna pra main(evitar segfault)
-    cmpq $1,%rax
-    je  imprime
+    movq TOPO_HEAP,%rax                 
+    cmpq %rax,INICIO_HEAP               #Confere se o mapa está vazio para evitar segfault
+    jne  imprime
     mov $mapa_vazio,%rdi
     call printf
     popq %rbp
     ret
     
     imprime:
-    mov  $barra,%rdi                    #Imprime uma barra no inicio
-    call printf
     movq INICIO_HEAP, %rax              #Coloca o inicio da heap em rax
     addq $16, %rax                      #Desloca o rax pra primeira variavel
     movq %rax, ANDARILHO
     loop:
+    mov $bytesFlags,%rdi
+    call printf
     movq ANDARILHO, %rax                #restaura %rax com o ANDARILHO
     movq -16(%rax), %rbx                #Coloca a flag de ocupado ou livre em %rbx
     cmpq $0, %rbx                       #Confere se está ocupado ou livre
-    je  imprimeLivre                    #se estiver livre imprime +
-    jne imprimeOcupado                  #se estiver ocupado imprime -
-    imprimeBytes:                       #imprime a quantidade de bytes livres
+    je  imprimeLivre                    #se estiver livre imprime - vezes o número de bytes livres
+    jne imprimeOcupado                  #se estiver ocupado imprime + vees o número de bytes ocupados
+
+    imprimeLivre:
     movq ANDARILHO, %rax
-    movq -8(%rax), %rbx                 #Coloca o número de bytes do bloco em %rbx
-    mov $bytesLivres, %rdi
-    movq %rbx, %rsi
-    call printf                         #Imprime a quantidade de bytes do bloco
-    mov $str1, %rdi                     #Imprime os simbolso para demonstrar os bytes
+    movq -8(%rax), %rbx                 #Move a quantidade de bytes ocupados para %rbx
+    loopLivre:                          #Parte do código que imprime o sinal de ocupado ou livre n vezes
+    mov $livre, %rdi
     call printf
+    subq $1, %rbx                       #Subtrai %rbx em 1 até chegar em 0, para imprimir os n bytes
+    cmpq $0, %rbx
+    jg loopLivre                        #Enquanto %rbx for menor que 0 continua no loop
     movq ANDARILHO, %rax                #Restaura %rax
     movq -8(%rax), %rbx                 
     addq $16, %rbx
     addq %rbx, ANDARILHO                #desloca para o próximo nodo
     movq ANDARILHO,%rbx
     cmpq TOPO_HEAP, %rbx                #Confere se alcançou o fim da heap
-    jl  loop                            
-    mov $str2, %rdi                     #Pula a linha e coloca uma ultima fileira de "-------" para acabar a impressão
-    call printf
-    movq $str3,%rdi
+    jl  loop
+    jmp final
+
+    imprimeOcupado:
+    movq ANDARILHO, %rax
+    movq -8(%rax), %rbx                 #Move a quantidade de bytes ocupados para %rbx
+    loopOcupado:                        #Parte do código que imprime o sinal de ocupado ou livre n vezes
+    mov $ocupado, %rdi
+    call printf                         
+    subq $1, %rbx                       #Subtrai %rbx em 1 até chegar em 0, para imprimir os n bytes
+    cmpq $0, %rbx
+    jg loopOcupado                      #Enquanto %rbx for menor que 0 continua no loop
+    movq ANDARILHO, %rax                #Restaura %rax
+    movq -8(%rax), %rbx                 
+    addq $16, %rbx
+    addq %rbx, ANDARILHO                #desloca para o próximo nodo
+    movq ANDARILHO,%rbx
+    cmpq TOPO_HEAP, %rbx                #Confere se alcançou o fim da heap
+    jl  loop
+    jmp final
+
+    final:
+    movq $str2,%rdi
     call printf
     popq %rbp
     ret
 
-    imprimeLivre:
-    mov $livre, %rdi
-    call printf
-    jmp imprimeBytes
 
-    imprimeOcupado:
-    mov $ocupado, %rdi
-    call printf
-    jmp imprimeBytes
 
